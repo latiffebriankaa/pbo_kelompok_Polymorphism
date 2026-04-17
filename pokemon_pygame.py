@@ -36,6 +36,15 @@ IMAGE_BY_RARITY = {
     "EPIC": ["charizard ultra rare.jpg", "mew.jpg"],
 }
 
+IMAGE_BY_NAME = {
+    "bulbasaur": "bulasaur.jpg",
+    "sqruitle": "squirtle.jpg",
+    "squirtle": "squirtle.jpg",
+    "pikacu": "pikacuu.jpg",
+    "mew": "mew.jpg",
+}
+
+MUSIC_FILE = os.path.join(ASSET_DIR, "pokemon_background.mp3")
 
 class Button:
     def __init__(self, rect, label):
@@ -54,10 +63,8 @@ class Button:
     def clicked(self, event):
         return event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.rect.collidepoint(event.pos)
 
-
 def clamp(value, minimum, maximum):
     return max(minimum, min(value, maximum))
-
 
 def card_label(card):
     if isinstance(card, KartuCommon):
@@ -66,9 +73,8 @@ def card_label(card):
         return "RARE"
     return "EPIC"
 
-
 def load_image_library():
-    image_library = {"COMMON": [], "RARE": [], "EPIC": []}
+    image_library = {"COMMON": [], "RARE": [], "EPIC": [], "BY_FILE": {}}
 
     for rarity, filenames in IMAGE_BY_RARITY.items():
         for filename in filenames:
@@ -77,18 +83,17 @@ def load_image_library():
                 try:
                     image = pygame.image.load(path).convert()
                     image_library[rarity].append(image)
+                    image_library["BY_FILE"][filename] = image
                 except pygame.error:
                     pass
 
     return image_library
-
 
 def stable_index(text, length):
     total = 0
     for char in text:
         total += ord(char)
     return total % length if length else 0
-
 
 def prepare_card_image(card, image_library, size):
     rarity = card_label(card)
@@ -99,17 +104,20 @@ def prepare_card_image(card, image_library, size):
 
     selected = getattr(card, "_image_surface", None)
     if selected is None:
-        selected = choices[stable_index(card.nama, len(choices))]
+        file_lookup = image_library.get("BY_FILE", {})
+        mapped_filename = IMAGE_BY_NAME.get(card.nama.strip().lower())
+        mapped_image = file_lookup.get(mapped_filename) if mapped_filename else None
+
+        # Pakai mapping nama dulu agar tiap pokemon tampil konsisten dengan gambarnya.
+        selected = mapped_image if mapped_image is not None else choices[stable_index(card.nama, len(choices))]
         setattr(card, "_image_surface", selected)
 
     return pygame.transform.smoothscale(selected, size)
-
 
 def draw_card_frame(surface, rect, active=False):
     base_color = CARD_FACE if active else (234, 236, 241)
     pygame.draw.rect(surface, base_color, rect, border_radius=16)
     pygame.draw.rect(surface, CARD_BORDER, rect, width=2, border_radius=16)
-
 
 def draw_card_back(surface, rect, scale=1.0):
     width = max(10, int(rect.width * scale))
@@ -117,7 +125,6 @@ def draw_card_back(surface, rect, scale=1.0):
     back_rect.center = rect.center
     pygame.draw.rect(surface, CARD_BACK, back_rect, border_radius=12)
     pygame.draw.rect(surface, CARD_BACK_HIGHLIGHT, back_rect.inflate(-12, -12), width=2, border_radius=10)
-
 
 def draw_card_image(surface, card, rect, image_library, scale=1.0):
     image = prepare_card_image(card, image_library, (rect.width - 16, rect.height - 16))
@@ -135,7 +142,6 @@ def draw_card_image(surface, card, rect, image_library, scale=1.0):
     image_rect = scaled.get_rect(center=rect.center)
     surface.blit(scaled, image_rect)
 
-
 def draw_flip_card(surface, card, rect, image_library, now_ms, started_at_ms):
     elapsed = clamp(now_ms - started_at_ms, 0, FLIP_DURATION)
     progress = elapsed / FLIP_DURATION
@@ -149,27 +155,32 @@ def draw_flip_card(surface, card, rect, image_library, now_ms, started_at_ms):
         draw_card_frame(surface, rect, active=False)
         draw_card_image(surface, card, rect, image_library, scale=scale)
 
-
 def draw_static_card(surface, card, rect, image_library):
     draw_card_frame(surface, rect, active=False)
     draw_card_image(surface, card, rect, image_library, scale=1.0)
-
 
 def draw_empty_slot(surface, rect):
     pygame.draw.rect(surface, (28, 35, 48), rect, border_radius=16)
     pygame.draw.rect(surface, (55, 67, 89), rect, width=2, border_radius=16)
 
-
 def summarize(cards):
     rarity_count = Counter(card_label(c) for c in cards)
     return rarity_count["COMMON"], rarity_count["RARE"], rarity_count["EPIC"]
 
-
 def run_app():
     pygame.init()
-    pygame.display.set_caption("Gacha Kartu Pokemon - Pygame")
+    pygame.mixer.init()
+    pygame.display.set_caption("Gacha Kartu Pokemon ")
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     clock = pygame.time.Clock()
+
+    if os.path.exists(MUSIC_FILE):
+        try:
+            pygame.mixer.music.load(MUSIC_FILE)
+            pygame.mixer.music.set_volume(0.5)
+            pygame.mixer.music.play(-1)
+        except Exception as e:
+            print(f"Warning: Could not load music - {e}")
 
     font_title = pygame.font.SysFont("consolas", 30, bold=True)
     font_button = pygame.font.SysFont("consolas", 22, bold=True)
@@ -241,9 +252,9 @@ def run_app():
         pygame.draw.circle(screen, (35, 45, 67), (980, 110), 110)
         pygame.draw.circle(screen, (27, 36, 55), (1000, 520), 120)
 
-        title = font_title.render("GACHA KARTU POKEMON (POLYMORPHISM)", True, TEXT_COLOR)
+        title = font_title.render("GACHA KARTU POKEMON", True, TEXT_COLOR)
         screen.blit(title, (30, 25))
-        subtitle = font_caption.render("Image-only cards with sequential flip reveal", True, MUTED_TEXT)
+        subtitle = font_caption.render("ilustrasi, di buat oleh kelompok 5", True, MUTED_TEXT)
         screen.blit(subtitle, (30, 57))
 
         btn_single.draw(screen, font_button, mouse_pos)
@@ -297,9 +308,9 @@ def run_app():
         pygame.display.flip()
         clock.tick(FPS)
 
+    pygame.mixer.music.stop()
     pygame.quit()
     sys.exit()
-
 
 if __name__ == "__main__":
     run_app()

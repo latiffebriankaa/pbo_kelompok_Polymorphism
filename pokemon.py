@@ -4,8 +4,7 @@ POKEMON_COMMON = ["Rattata", "Pidgey", "bulbasaur", "sqruitle"]
 POKEMON_RARE   = ["Pikacu", "Eevee", "Gengar", "Arcerus"]
 POKEMON_EPIC   = ["Dragonite", "Mewtwo", "Mew", "Charizard"]
 
-
-# Parent class: menyimpan atribut umum yang dipakai semua kartu.
+# Parent class untuk menyimpan atribut umum yang dipakai semua kartu.
 class KartuPokemon:
     def __init__(self, nama, hp, damage):
         self.nama = nama
@@ -13,7 +12,7 @@ class KartuPokemon:
         self.damage = damage
 
     # Method dasar ini akan dioverride di subclass.
-    # Inilah inti polymorphism: nama method sama, hasil berbeda.
+    # Inilah inti polymorphism, nama method sama, hasilnya berbeda.
     def info_kartu(self):
         return "Informasi kartu belum tersedia."
 
@@ -22,8 +21,7 @@ class KartuPokemon:
         # Isi outputnya berubah sesuai class objeknya.
         print(self.info_kartu())
 
-
-# Subclass Common: kartu paling sering muncul.
+# Subclass Common kartu paling sering muncul.
 class KartuCommon(KartuPokemon):
     def __init__(self, nama):
         # HP dan damage dibuat saat objek dibuat supaya tiap kartu punya stat sendiri.
@@ -38,8 +36,7 @@ class KartuCommon(KartuPokemon):
             f"Rarity : COMMON"
         )
 
-
-# Subclass Rare: lebih kuat dari Common dan punya skill tambahan.
+# Subclass Rare lebih kuat dari Common dan punya skill tambahan.
 class KartuRare(KartuPokemon):
     def __init__(self, nama):
         super().__init__(nama, hp=random.randint(70, 110), damage=random.randint(30, 55))
@@ -54,8 +51,7 @@ class KartuRare(KartuPokemon):
             f"Rarity : RARE"
         )
 
-
-# Subclass Epic: rarity tertinggi dengan stat paling besar.
+# Subclass Epic rarity tertinggi dengan stat paling besar.
 class KartuEpic(KartuPokemon):
     def __init__(self, nama):
         super().__init__(nama, hp=random.randint(130, 200), damage=random.randint(70, 120))
@@ -70,7 +66,6 @@ class KartuEpic(KartuPokemon):
             f"         Ultimate Blast\n"
             f"Rarity : EPIC"
         )
-
 
 # Fungsi gacha memilih satu kartu berdasarkan peluang rarity.
 def gacha_satu_kartu():
@@ -90,17 +85,15 @@ def gacha_satu_kartu():
 
     return kartu
 
-
+#Pull 1 kartu.
 def single_pull():
-    #Pull 1 kartu.
     print("\n SINGLE PULL ")
     kartu = gacha_satu_kartu()
     # Satu method tampilkan() dipakai untuk semua jenis kartu.
-    kartu.tampilkan()  # ← polymorphism: info_kartu() berbeda tiap rarity
+    kartu.tampilkan()  # polymorphism, info_kartu() berbeda tiap rarity
 
-
+#Pull 10 kartu langsung.
 def multi_pull():
-    """Pull 10 kartu sekaligus."""
     print("\n MULTI PULL (10x) ")
     hasil = [gacha_satu_kartu() for _ in range(10)]
 
@@ -111,12 +104,11 @@ def multi_pull():
 
     for kartu in hasil:
         # Objek yang berbeda tetap dipanggil dengan method yang sama.
-        kartu.tampilkan()  # ← polymorphism dipanggil 10x, hasil beda-beda
+        kartu.tampilkan()  # polymorphism dipanggil 10x, hasil beda-beda
 
     print(f"\nRingkasan: Common={common_count} | Rare={rare_count} | Epic={epic_count}")
 
-
-# Program utama: menu sederhana agar ada interaksi user.
+# Program utama menu sederhana agar ada interaksi user.
 def main():
     print("-" * 35)
     print("   GACHA KARTU POKEMON")
@@ -137,7 +129,6 @@ def main():
             break
         else:
             print("Pilihan tidak valid, coba lagi.")
-
 
 if __name__ == "__main__":
     main()
